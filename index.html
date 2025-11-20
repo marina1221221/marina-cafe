@@ -2,27 +2,36 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Marina-cafe</title>
 
 <style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
 html, body {
-  margin: 0;
+  width: 100%;
   height: 100%;
   overflow: hidden;
   background: #fff;
+  touch-action: manipulation;
 }
 
 body {
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
+/* الكتاب الآن ياخذ الشاشة كاملة */
 #book {
-  width: 92vw;
-  height: 92vh;
+  width: 100vw;
+  height: 100vh;
   position: relative;
-  perspective: 2000px;
+  perspective: 1800px;
 }
 
 .page {
@@ -38,19 +47,14 @@ body {
   backface-visibility: hidden;
   transform-origin: left;
   transition: transform 1s cubic-bezier(.45,0,.15,1);
-
-  box-shadow: 0 15px 45px rgba(0,0,0,0.35);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
 }
 
-/* تأثير الورقة وهي بتتني (Peel Off Curl) */
 .page::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to left,
-    rgba(0,0,0,0.35),
-    rgba(0,0,0,0)
-  );
+  background: linear-gradient(to left,rgba(0,0,0,0.35),rgba(0,0,0,0));
   opacity: 0;
   transition: opacity .6s;
   pointer-events: none;
@@ -78,13 +82,12 @@ const pages = [
   "p1.jpg",
   "p2.jpg",
   "p3.jpg",
-   "p4.jpg",
-    "p5.jpg",
-     "p6.jpg",
-      "p7.jpg",
-       "p8.jpg",
-      "p9.jpg"  
-  
+  "p4.jpg",
+  "p5.jpg",
+  "p6.jpg",
+  "p7.jpg",
+  "p8.jpg",
+  "p9.jpg"
 ];
 
 let A = document.getElementById("pageA");
@@ -111,10 +114,6 @@ function loadPages(skip = false) {
 
 loadPages(true);
 
-/* ------------------------------------------------------ */
-/*                     القلب للأمام                       */
-/* ------------------------------------------------------ */
-
 function flipForward() {
   if (flipping) return;
   flipping = true;
@@ -123,10 +122,8 @@ function flipForward() {
   sound.play();
 
   A.classList.add("peeling");
-
   A.style.transformOrigin = "left";
-  A.style.transform = "rotateY(-180deg) rotateZ(1deg) scale(.97)";
-  A.style.boxShadow = "0 25px 55px rgba(0,0,0,0.45)";
+  A.style.transform = "rotateY(-180deg) rotateZ(1deg) scale(.98)";
 
   A.addEventListener("transitionend", function done(){
     A.classList.remove("peeling");
@@ -136,15 +133,9 @@ function flipForward() {
 
     [A, B] = [B, A];
     loadPages(true);
-
     flipping = false;
   }, { once: true });
 }
-
-/* ------------------------------------------------------ */
-/*                     القلب للخلف                       */
-/*  (نفس الترانزكشن 100% زي القلب للأمام – معكوس فقط)   */
-/* ------------------------------------------------------ */
 
 function flipBackward() {
   if (flipping || current === 0) return;
@@ -156,35 +147,24 @@ function flipBackward() {
   let prev = (current - 1 + pages.length) % pages.length;
 
   B.style.backgroundImage = `url("${pages[current]}")`;
-  B.style.zIndex = 2;
-
   A.style.backgroundImage = `url("${pages[prev]}")`;
-  A.style.zIndex = 1;
 
   B.classList.add("peeling");
-
-  B.style.transition = "transform 1s cubic-bezier(.45,0,.15,1)";
   B.style.transformOrigin = "right";
-  B.style.transform = "rotateY(180deg) rotateZ(-1deg) scale(.97)";
-  B.style.boxShadow = "0 25px 55px rgba(0,0,0,0.45)";
+  B.style.transform = "rotateY(180deg) rotateZ(-1deg) scale(.98)";
 
   B.addEventListener("transitionend", function done(){
     B.classList.remove("peeling");
     B.removeEventListener("transitionend", done);
 
     current = prev;
-
     [A, B] = [B, A];
     loadPages(true);
-
     flipping = false;
   }, { once: true });
 }
 
-/* ------------------------------------------------------ */
-/*                     التحكم باللمس                      */
-/* ------------------------------------------------------ */
-
+/* تحكم باللمس والموبايل */
 document.body.addEventListener("click", (e) => {
   if (e.clientX > window.innerWidth / 2) flipForward();
   else flipBackward();
