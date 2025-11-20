@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peel Off 3D Flipbook</title>
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #fff;
+}
+
+body {
+  display: grid;
+  place-items: center;
+}
+
+#book {
+  width: 92vw;
+  height: 92vh;
+  position: relative;
+  perspective: 2000px;
+}
+
+.page {
+  width: 360px;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transform-origin: left;
+  transition: transform 1s cubic-bezier(.45,0,.15,1);
+
+  box-shadow: 0 15px 45px rgba(0,0,0,0.35);
+}
+
+/* تأثير الورقة وهي بتتني (Peel Off Curl) */
+.page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to left,
+    rgba(0,0,0,0.35),
+    rgba(0,0,0,0)
+  );
+  opacity: 0;
+  transition: opacity .6s;
+  pointer-events: none;
+}
+
+.page.peeling::before {
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<audio id="flipSound" src="page-flip-47177.mp3"></audio>
+
+<div id="book">
+  <div id="pageA" class="page"></div>
+  <div id="pageB" class="page"></div>
+</div>
+
+<script>
+const sound = document.getElementById("flipSound");
+
+const pages = [
+  "file:///E:/Marina Cafe/h1.jpg",
+  "file:///E:/Marina Cafe/p1.jpg",
+  "file:///E:/Marina Cafe/p2.jpg",
+  "file:///E:/Marina Cafe/p3.jpg",
+  "file:///E:/Marina Cafe/p4.jpg",
+  "file:///E:/Marina Cafe/p5.jpg",
+  "file:///E:/Marina Cafe/p6.jpg",
+  "file:///E:/Marina Cafe/p7.jpg",
+  "file:///E:/Marina Cafe/p8.jpg",
+  "file:///E:/Marina Cafe/p9.jpg"
+];
+
+
+let A = document.getElementById("pageA");
+let B = document.getElementById("pageB");
+
+let current = 0;
+let flipping = false;
+
+function loadPages(skip = false) {
+  A.style.backgroundImage = `url("${pages[current]}")`;
+  A.style.zIndex = 2;
+
+  B.style.backgroundImage = `url("${pages[(current+1)%pages.length]}")`;
+  B.style.zIndex = 1;
+
+  A.style.transition = skip ? "none" : "transform 1s cubic-bezier(.45,0,.15,1)";
+  B.style.transition = "none";
+
+  A.style.transform = "rotateY(0deg)";
+  B.style.transform = "rotateY(0deg)";
+
+  if (skip) setTimeout(()=>A.style.transition="", 40);
+}
+
+loadPages(true);
+
+/* ------------------------------------------------------ */
+/*                     القلب للأمام                       */
+/* ------------------------------------------------------ */
+
+function flipForward() {
+  if (flipping) return;
+  flipping = true;
+
+  sound.currentTime = 0;
+  sound.play();
+
+  A.classList.add("peeling");
+
+  A.style.transformOrigin = "left";
+  A.style.transform = "rotateY(-180deg) rotateZ(1deg) scale(.97)";
+  A.style.boxShadow = "0 25px 55px rgba(0,0,0,0.45)";
+
+  A.addEventListener("transitionend", function done(){
+    A.classList.remove("peeling");
+    A.removeEventListener("transitionend", done);
+
+    current = (current + 1) % pages.length;
+
+    [A, B] = [B, A];
+    loadPages(true);
+
+    flipping = false;
+  }, { once: true });
+}
+
+/* ------------------------------------------------------ */
+/*                     القلب للخلف                       */
+/*  (نفس الترانزكشن 100% زي القلب للأمام – معكوس فقط)   */
+/* ------------------------------------------------------ */
+
+function flipBackward() {
+  if (flipping || current === 0) return;
+  flipping = true;
+
+  sound.currentTime = 0;
+  sound.play();
+
+  let prev = (current - 1 + pages.length) % pages.length;
+
+  B.style.backgroundImage = `url("${pages[current]}")`;
+  B.style.zIndex = 2;
+
+  A.style.backgroundImage = `url("${pages[prev]}")`;
+  A.style.zIndex = 1;
+
+  B.classList.add("peeling");
+
+  B.style.transition = "transform 1s cubic-bezier(.45,0,.15,1)";
+  B.style.transformOrigin = "right";
+  B.style.transform = "rotateY(180deg) rotateZ(-1deg) scale(.97)";
+  B.style.boxShadow = "0 25px 55px rgba(0,0,0,0.45)";
+
+  B.addEventListener("transitionend", function done(){
+    B.classList.remove("peeling");
+    B.removeEventListener("transitionend", done);
+
+    current = prev;
+
+    [A, B] = [B, A];
+    loadPages(true);
+
+    flipping = false;
+  }, { once: true });
+}
+
+/* ------------------------------------------------------ */
+/*                     التحكم باللمس                      */
+/* ------------------------------------------------------ */
+
+document.body.addEventListener("click", (e) => {
+  if (e.clientX > window.innerWidth / 2) flipForward();
+  else flipBackward();
+});
+</script>
+
+</body>
+</html>
